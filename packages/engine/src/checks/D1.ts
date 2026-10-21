@@ -1,5 +1,5 @@
 /** D1: every blocker the platform reports is a block on the run. */
-import type { Check, Exception } from "../types.js";
+import type { Check, Exception } from "../types";
 
 export const D1: Check = {
   code: "D1",

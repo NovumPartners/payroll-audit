@@ -1,7 +1,7 @@
 /** B6: net pay below half of the prior period with no request of any kind. */
-import type { Check, Exception } from "../types.js";
-import { dollars } from "../context.js";
-import { nameFor, profId, requestsFor } from "./_b.js";
+import type { Check, Exception } from "../types";
+import { dollars } from "../context";
+import { nameFor, profId, requestsFor } from "./_b";
 
 export const B6: Check = {
   code: "B6",

@@ -2,9 +2,9 @@
  * B5: a deduction or employer contribution changed, appeared, or disappeared
  * since the prior period with no benefit_change or deduction_change request.
  */
-import type { Check, DeductionLine, Exception } from "../types.js";
-import { dollars } from "../context.js";
-import { nameFor, profId, requestsFor } from "./_b.js";
+import type { Check, DeductionLine, Exception } from "../types";
+import { dollars } from "../context";
+import { nameFor, profId, requestsFor } from "./_b";
 
 function same(a: DeductionLine, b: DeductionLine): boolean {
   return (!!a.planId && a.planId === b.planId) || a.name === b.name;

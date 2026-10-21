@@ -20,7 +20,7 @@ import type {
   RunReport,
   TimeOffPolicy,
 } from "@payroll-qa/engine";
-import * as s from "./schema.js";
+import * as s from "./schema";
 
 export type AnyDb = PgDatabase<PgQueryResultHKT, typeof s>;
 
@@ -900,4 +900,17 @@ export async function listLiveClientsWithSpecialist(db: AnyDb) {
 export async function leadSlackId(db: AnyDb): Promise<string | undefined> {
   const [u] = await db.select({ slack: s.users.slackUserId }).from(s.users).where(and(eq(s.users.role, "lead"), eq(s.users.active, true), sql`${s.users.slackUserId} is not null`)).orderBy(asc(s.users.createdAt)).limit(1);
   return u?.slack ?? undefined;
+}
+
+// ---------- profile document facts ----------
+
+export async function getDocumentFacts(db: AnyDb, clientId: string) {
+  return db.select().from(s.profileDocumentFacts).where(eq(s.profileDocumentFacts.clientId, clientId)).orderBy(asc(s.profileDocumentFacts.boxFileId));
+}
+
+export async function saveDocumentFacts(db: AnyDb, row: { clientId: string; boxFileId: string; boxFileName: string; boxFileSha1: string; kind: string; facts: unknown; modelId?: string }) {
+  await db
+    .insert(s.profileDocumentFacts)
+    .values({ clientId: row.clientId, boxFileId: row.boxFileId, boxFileName: row.boxFileName, boxFileSha1: row.boxFileSha1, kind: row.kind, facts: row.facts, modelId: row.modelId ?? null })
+    .onConflictDoUpdate({ target: [s.profileDocumentFacts.clientId, s.profileDocumentFacts.boxFileId, s.profileDocumentFacts.boxFileSha1], set: { boxFileName: row.boxFileName, kind: row.kind, facts: row.facts, modelId: row.modelId ?? null, extractedAt: new Date() } });
 }

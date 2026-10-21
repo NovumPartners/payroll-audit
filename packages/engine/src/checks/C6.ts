@@ -4,8 +4,8 @@
  * one accrual period of the balance computed from the prior balance, the
  * policy, and the hours on the draft.
  */
-import type { Check, Exception } from "../types.js";
-import { earningHours } from "../context.js";
+import type { Check, Exception } from "../types";
+import { earningHours } from "../context";
 
 export const C6: Check = {
   code: "C6",

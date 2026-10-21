@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { runChecks } from "@payroll-qa/engine";
-import { annualizeRate, classifyEarning, mapGustoPayroll, sumHousing, type GustoContext } from "../src/gusto/map.js";
-import { JotFormMapper, normalizeDate, verifySharedSecret } from "../src/jotform/index.js";
-import { parseCsv, parseRipplingRegister } from "../src/rippling/index.js";
+import { annualizeRate, classifyEarning, mapGustoPayroll, sumHousing, type GustoContext } from "../src/gusto/map";
+import { JotFormMapper, normalizeDate, verifySharedSecret } from "../src/jotform/index";
+import { parseCsv, parseRipplingRegister } from "../src/rippling/index";
 
 function ministerCtx(): GustoContext {
   return {

@@ -5,8 +5,8 @@
  * with no resolution on file. When year-to-date is not reported the cap is
  * stated as unverified rather than assumed fine.
  */
-import type { Check, Exception } from "../types.js";
-import { dollars, earning } from "../context.js";
+import type { Check, Exception } from "../types";
+import { dollars, earning } from "../context";
 
 export const C2: Check = {
   code: "C2",

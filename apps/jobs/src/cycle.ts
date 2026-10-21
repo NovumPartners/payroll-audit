@@ -15,9 +15,9 @@
  */
 import { familyD, runChecks } from "@payroll-qa/engine";
 import { missingInputsReminder } from "@payroll-qa/adapters";
-import type { ClientCtx, Deps, RunCtx } from "./deps.js";
-import { runQaForClient } from "./run-qa.js";
-import { cutoffFor, isoDate, openStages, type Stage } from "./schedule.js";
+import type { ClientCtx, Deps, RunCtx } from "./deps";
+import { runQaForClient } from "./run-qa";
+import { cutoffFor, isoDate, openStages, type Stage } from "./schedule";
 
 export interface CycleOutcome {
   clientId: string;

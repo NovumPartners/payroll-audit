@@ -38,9 +38,9 @@ export interface WebhookMapper {
   toChangeRequest(raw: unknown): ChangeRequest;
 }
 
-export { GustoAdapter, type GustoAdapterOptions } from "./gusto/index.js";
-export { mapGustoPayroll, classifyEarning, annualizeRate, sumHousing, type GustoContext, type GustoPayroll } from "./gusto/map.js";
-export { RipplingCsvAdapter, parseRipplingRegister, parseCsv, DEFAULT_REGISTER_COLUMNS, DEFAULT_ROSTER_COLUMNS } from "./rippling/index.js";
-export { JotFormMapper, normalizeDate, verifySharedSecret, type JotFormFieldMap, type JotFormRawSubmission } from "./jotform/index.js";
-export { BoxStore, boxCcgTokenProvider, type BoxCcgConfig, type TokenProvider } from "./box/index.js";
-export { SlackDrafts, SlackWebApi, exceptionsDigest, missingInputsReminder } from "./slack/index.js";
+export { GustoAdapter, type GustoAdapterOptions } from "./gusto/index";
+export { mapGustoPayroll, classifyEarning, annualizeRate, sumHousing, type GustoContext, type GustoPayroll } from "./gusto/map";
+export { RipplingCsvAdapter, parseRipplingRegister, parseCsv, DEFAULT_REGISTER_COLUMNS, DEFAULT_ROSTER_COLUMNS } from "./rippling/index";
+export { JotFormMapper, normalizeDate, verifySharedSecret, type JotFormFieldMap, type JotFormRawSubmission } from "./jotform/index";
+export { BoxStore, boxCcgTokenProvider, type BoxCcgConfig, type TokenProvider } from "./box/index";
+export { SlackDrafts, SlackWebApi, exceptionsDigest, missingInputsReminder } from "./slack/index";

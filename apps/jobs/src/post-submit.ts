@@ -3,8 +3,8 @@
  * approved draft, record the comparison, and open a post-submit exception per
  * difference. Runs once per submitted run.
  */
-import { compareRegisters } from "./diff.js";
-import type { Deps } from "./deps.js";
+import { compareRegisters } from "./diff";
+import type { Deps } from "./deps";
 
 export async function postSubmitCompare(deps: Deps): Promise<{ runId: string; differences?: number; skipped?: string }[]> {
   const now = deps.now();

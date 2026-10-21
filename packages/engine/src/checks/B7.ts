@@ -1,6 +1,6 @@
 /** B7: total client gross moved more than the threshold from the prior run. */
-import type { Check } from "../types.js";
-import { dollars } from "../context.js";
+import type { Check } from "../types";
+import { dollars } from "../context";
 
 export const B7: Check = {
   code: "B7",

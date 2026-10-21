@@ -4,8 +4,8 @@
  * election. A non-minister with wages and no FICA at all is set up as exempt
  * on the platform without the profile saying so, and is raised for review.
  */
-import type { Check, Exception } from "../types.js";
-import { dollars } from "../context.js";
+import type { Check, Exception } from "../types";
+import { dollars } from "../context";
 
 export const C3: Check = {
   code: "C3",

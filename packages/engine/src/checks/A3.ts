@@ -5,8 +5,8 @@
  * hire date. For an hourly hire it relies on the platform's first paid day
  * when the adapter exposes one.
  */
-import type { Check, Exception } from "../types.js";
-import { baseSalary, dollars, expectedSalaryForPeriod } from "../context.js";
+import type { Check, Exception } from "../types";
+import { baseSalary, dollars, expectedSalaryForPeriod } from "../context";
 
 export const A3: Check = {
   code: "A3",

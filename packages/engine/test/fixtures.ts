@@ -4,7 +4,7 @@
  * a salaried administrator with benefits, and an hourly facilities worker with PTO.
  * The base scenario passes every check. Each test mutates one thing.
  */
-import type { ChangeRequest, DraftEmployee, DraftRun, PayrollProfile, RunInput } from "../src/types.js";
+import type { ChangeRequest, DraftEmployee, DraftRun, PayrollProfile, RunInput } from "../src/types";
 
 export const PERIOD = { start: "2026-11-01", end: "2026-11-15", payDate: "2026-11-20" };
 export const PRIOR_PERIOD = { start: "2026-10-16", end: "2026-10-31", payDate: "2026-11-05" };

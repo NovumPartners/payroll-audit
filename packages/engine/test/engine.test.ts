@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { ALL_CHECKS, runChecks, renderReportMarkdown, renderPreviewMarkdown, DEFAULT_CONFIG } from "../src/index.js";
-import type { RunInput } from "../src/types.js";
-import { AS_OF, base, draft, emp, request } from "./fixtures.js";
+import { ALL_CHECKS, runChecks, renderReportMarkdown, renderPreviewMarkdown, DEFAULT_CONFIG } from "../src/index";
+import type { RunInput } from "../src/types";
+import { AS_OF, base, draft, emp, request } from "./fixtures";
 
 describe("engine", () => {
   it("registers 22 checks in spec order", () => {

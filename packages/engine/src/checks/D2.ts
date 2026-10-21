@@ -3,8 +3,8 @@
  * increase, a benefit eligibility date, a housing designation expiring within
  * the warning window, and an accrual cap newly reached.
  */
-import type { Check, Exception } from "../types.js";
-import { daysBetween, inPeriod } from "../context.js";
+import type { Check, Exception } from "../types";
+import { daysBetween, inPeriod } from "../context";
 
 function isLeap(y: number): boolean {
   return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;

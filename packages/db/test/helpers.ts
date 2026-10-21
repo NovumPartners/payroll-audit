@@ -2,9 +2,9 @@ import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import { fileURLToPath } from "node:url";
-import * as schema from "../src/schema.js";
-import { replaceDraftProfile, signProfile, upsertClient, upsertUser, type AnyDb } from "../src/repo.js";
-import { profile as fixtureProfile } from "../../engine/test/fixtures.js";
+import * as schema from "../src/schema";
+import { replaceDraftProfile, signProfile, upsertClient, upsertUser, type AnyDb } from "../src/repo";
+import { profile as fixtureProfile } from "../../engine/test/fixtures";
 
 export async function testDb(): Promise<AnyDb> {
   const client = new PGlite();

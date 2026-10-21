@@ -6,7 +6,7 @@
  */
 import { renderReportMarkdown, runChecks } from "@payroll-qa/engine";
 import { exceptionsDigest } from "@payroll-qa/adapters";
-import type { ClientCtx, Deps, RunCtx } from "./deps.js";
+import type { ClientCtx, Deps, RunCtx } from "./deps";
 
 export interface QaOutcome {
   clientId: string;

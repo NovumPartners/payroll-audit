@@ -1,5 +1,5 @@
 /** Shared helpers for family B (platform to prior period). */
-import type { CheckContext, ChangeRequest, DraftEmployee } from "../types.js";
+import type { CheckContext, ChangeRequest, DraftEmployee } from "../types";
 
 /** Non-rejected requests for an employee (by platform id) effective after the prior period end and on or before this period end. */
 export function requestsFor(ctx: CheckContext, platformId: string): ChangeRequest[] {

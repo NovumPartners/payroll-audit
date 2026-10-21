@@ -1,5 +1,5 @@
-import { dollars } from "./context.js";
-import type { RunReport } from "./types.js";
+import { dollars } from "./context";
+import type { RunReport } from "./types";
 
 /** One-page QA report for the pod. Filed to Box as Markdown, JSON and PDF by the jobs app. */
 export function renderReportMarkdown(r: RunReport): string {

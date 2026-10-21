@@ -3,9 +3,9 @@
  * the hard cap. The cap is stated per biweekly period (80) and scaled to the
  * pay frequency, so a semimonthly full-timer at 86.67 hours does not fire.
  */
-import type { Check, Exception } from "../types.js";
-import { scaledHours } from "../context.js";
-import { nameFor } from "./_b.js";
+import type { Check, Exception } from "../types";
+import { scaledHours } from "../context";
+import { nameFor } from "./_b";
 
 export const B3: Check = {
   code: "B3",

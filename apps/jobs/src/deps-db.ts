@@ -7,7 +7,7 @@ import type { DocumentStore, Notifier, PlatformAdapter } from "@payroll-qa/adapt
 import type { DraftRun, RunReport } from "@payroll-qa/engine";
 import * as repo from "@payroll-qa/db";
 import type { AnyDb } from "@payroll-qa/db";
-import type { ClientCtx, Deps, Notification, RunCtx } from "./deps.js";
+import type { ClientCtx, Deps, Notification, RunCtx } from "./deps";
 
 export interface DbDepsOptions {
   db: AnyDb;

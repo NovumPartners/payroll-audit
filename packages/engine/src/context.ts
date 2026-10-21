@@ -10,7 +10,7 @@ import {
   type Period,
   type ProfileEmployee,
   type RunInput,
-} from "./types.js";
+} from "./types";
 
 export function inPeriod(date: string, start: string, end: string): boolean {
   return date >= start && date <= end;

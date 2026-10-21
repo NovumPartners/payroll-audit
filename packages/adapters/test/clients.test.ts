@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { GustoAdapter } from "../src/gusto/index.js";
-import { boxCcgTokenProvider, BoxStore } from "../src/box/index.js";
-import { RipplingCsvAdapter } from "../src/rippling/index.js";
+import { GustoAdapter } from "../src/gusto/index";
+import { boxCcgTokenProvider, BoxStore } from "../src/box/index";
+import { RipplingCsvAdapter } from "../src/rippling/index";
 
 type Route = (url: URL) => { status?: number; body?: unknown; headers?: Record<string, string> };
 

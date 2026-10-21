@@ -12,7 +12,7 @@
  */
 import { timingSafeEqual } from "node:crypto";
 import type { ChangePayload, ChangeRequest, ChangeType, PayFrequency, PayType } from "@payroll-qa/engine";
-import type { WebhookMapper } from "../index.js";
+import type { WebhookMapper } from "../index";
 
 export interface JotFormFieldMap {
   formId: string;

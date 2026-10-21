@@ -4,8 +4,8 @@
  * rehire (profile active with a hire date after the termination) ends the
  * check for that termination.
  */
-import type { Check, Exception } from "../types.js";
-import { baseSalary, dollars, earning, expectedSalaryForPeriod } from "../context.js";
+import type { Check, Exception } from "../types";
+import { baseSalary, dollars, earning, expectedSalaryForPeriod } from "../context";
 
 export const A4: Check = {
   code: "A4",

@@ -3,9 +3,9 @@
  * one_time_pay request. A time-off payout is explained by a termination
  * request that asked for it.
  */
-import type { Check, Exception } from "../types.js";
-import { RECURRING_EARNING_TYPES, dollars } from "../context.js";
-import { nameFor, profId, requestsFor } from "./_b.js";
+import type { Check, Exception } from "../types";
+import { RECURRING_EARNING_TYPES, dollars } from "../context";
+import { nameFor, profId, requestsFor } from "./_b";
 
 export const B4: Check = {
   code: "B4",

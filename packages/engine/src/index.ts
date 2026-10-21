@@ -1,8 +1,8 @@
-import { buildContext, cmp, dollars } from "./context.js";
-import { ALL_CHECKS } from "./checks/index.js";
-import type { Check, CheckContext, Exception, Movement, RunInput, RunReport } from "./types.js";
+import { buildContext, cmp, dollars } from "./context";
+import { ALL_CHECKS } from "./checks/index";
+import type { Check, CheckContext, Exception, Movement, RunInput, RunReport } from "./types";
 
-export * from "./types.js";
+export * from "./types";
 export {
   buildContext,
   dollars,
@@ -22,10 +22,10 @@ export {
   scaledHours,
   RECURRING_EARNING_TYPES,
   BASE_SALARY_TYPES,
-} from "./context.js";
-export { renderReportMarkdown, renderPreviewMarkdown } from "./report.js";
-export { ALL_CHECKS, familyA, familyB, familyC, familyD } from "./checks/index.js";
-export { anniversaryInPeriod } from "./checks/D2.js";
+} from "./context";
+export { renderReportMarkdown, renderPreviewMarkdown } from "./report";
+export { ALL_CHECKS, familyA, familyB, familyC, familyD } from "./checks/index";
+export { anniversaryInPeriod } from "./checks/D2";
 
 const severityRank = { block: 0, review: 1, info: 2 } as const;
 

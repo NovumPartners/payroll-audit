@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { runChecks, type PayrollProfile } from "@payroll-qa/engine";
-import { base, draft as fixtureDraft, prior as fixturePrior, emp } from "../../engine/test/fixtures.js";
+import { base, draft as fixtureDraft, prior as fixturePrior, emp } from "../../engine/test/fixtures";
 import {
   admitEntraUser,
   applyChangeRequest,
@@ -21,10 +21,10 @@ import {
   signGate,
   signProfile,
   type AnyDb,
-} from "../src/repo.js";
-import * as s from "../src/schema.js";
+} from "../src/repo";
+import * as s from "../src/schema";
 import { eq } from "drizzle-orm";
-import { seedGrace, testDb } from "./helpers.js";
+import { seedGrace, testDb } from "./helpers";
 
 /** Remap the in-memory fixture onto the database's employee ids so the engine fixtures can be reused. */
 function withDbIds(p: PayrollProfile) {

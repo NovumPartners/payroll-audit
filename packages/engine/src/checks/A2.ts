@@ -5,8 +5,8 @@
  * the profile. When neither gives it and the change is mid-period, the check
  * reports the proration as not verifiable instead of guessing.
  */
-import type { Check, Exception } from "../types.js";
-import { baseSalary, dollars, expectedSalaryWithRateChange } from "../context.js";
+import type { Check, Exception } from "../types";
+import { baseSalary, dollars, expectedSalaryWithRateChange } from "../context";
 
 export const A2: Check = {
   code: "A2",

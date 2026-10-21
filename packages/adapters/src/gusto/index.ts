@@ -4,7 +4,7 @@
  * GUSTO_API_BASE. Every call is a GET; nothing here can change a payroll.
  */
 import type { DraftRun } from "@payroll-qa/engine";
-import type { PlatformAdapter } from "../index.js";
+import type { PlatformAdapter } from "../index";
 import {
   HOUSING_NAMES,
   mapGustoPayroll,
@@ -16,7 +16,7 @@ import {
   type GustoPaySchedule,
   type GustoPayroll,
   type GustoTaxRequirement,
-} from "./map.js";
+} from "./map";
 
 export interface GustoAdapterOptions {
   accessToken: string;

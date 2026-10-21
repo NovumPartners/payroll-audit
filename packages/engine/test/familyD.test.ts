@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { anniversaryInPeriod, runChecks } from "../src/index.js";
-import { base, emp, request } from "./fixtures.js";
-import type { RunInput } from "../src/types.js";
+import { anniversaryInPeriod, runChecks } from "../src/index";
+import { base, emp, request } from "./fixtures";
+import type { RunInput } from "../src/types";
 
 const codes = (i: RunInput) => runChecks(i).exceptions.map((e) => e.checkCode);
 const hits = (i: RunInput, code: string) => runChecks(i).exceptions.filter((e) => e.checkCode === code);

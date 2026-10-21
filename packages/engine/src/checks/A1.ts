@@ -1,6 +1,6 @@
 /** A1: every applied change request effective this period is reflected in the draft. */
-import type { Check, Exception } from "../types.js";
-import { dollars, earning, platformIdFor } from "../context.js";
+import type { Check, Exception } from "../types";
+import { dollars, earning, platformIdFor } from "../context";
 
 export const A1: Check = {
   code: "A1",

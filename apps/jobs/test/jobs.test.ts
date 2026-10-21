@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { runCycle } from "../src/cycle.js";
-import { compareRegisters } from "../src/diff.js";
-import { postSubmitCompare } from "../src/post-submit.js";
-import { runQaForClient } from "../src/run-qa.js";
-import { cutoffFor, openStages } from "../src/schedule.js";
-import { fakeDeps } from "./fake-deps.js";
-import { emp, request } from "../../../packages/engine/test/fixtures.js";
+import { runCycle } from "../src/cycle";
+import { compareRegisters } from "../src/diff";
+import { postSubmitCompare } from "../src/post-submit";
+import { runQaForClient } from "../src/run-qa";
+import { cutoffFor, openStages } from "../src/schedule";
+import { fakeDeps } from "./fake-deps";
+import { emp, request } from "../../../packages/engine/test/fixtures";
 
 const at = (s: string) => new Date(s);
 

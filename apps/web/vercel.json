@@ -1,0 +1,8 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "pnpm --filter @payroll-qa/db run migrate && pnpm build",
+  "crons": [
+    { "path": "/api/cron/cycle", "schedule": "0 * * * *" },
+    { "path": "/api/cron/post-submit", "schedule": "30 12 * * *" }
+  ]
+}

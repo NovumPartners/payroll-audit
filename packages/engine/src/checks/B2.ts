@@ -3,8 +3,8 @@
  * already records the employee as terminated or on leave explains a drop; a
  * new employee always needs a new_hire request.
  */
-import type { Check, Exception } from "../types.js";
-import { nameFor, profId, requestsFor } from "./_b.js";
+import type { Check, Exception } from "../types";
+import { nameFor, profId, requestsFor } from "./_b";
 
 export const B2: Check = {
   code: "B2",

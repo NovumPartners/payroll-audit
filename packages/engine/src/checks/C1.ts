@@ -5,8 +5,8 @@
  * period. A rate change pending this period moves the rate expectation and
  * hands the amount to A2.
  */
-import type { Check, Exception } from "../types.js";
-import { baseSalary, dollars, expectedSalaryForPeriod } from "../context.js";
+import type { Check, Exception } from "../types";
+import { baseSalary, dollars, expectedSalaryForPeriod } from "../context";
 
 export const C1: Check = {
   code: "C1",

@@ -2,7 +2,7 @@
  * A5: a request still in status `received` whose effective date has arrived
  * (inside this period, or earlier and never applied) blocks the run.
  */
-import type { Check } from "../types.js";
+import type { Check } from "../types";
 
 export const A5: Check = {
   code: "A5",

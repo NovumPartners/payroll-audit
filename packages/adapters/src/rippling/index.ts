@@ -5,7 +5,7 @@
  * Column names are configurable because Rippling report exports are user-defined.
  */
 import type { DraftEmployee, DraftRun, PayFrequency } from "@payroll-qa/engine";
-import type { PlatformAdapter } from "../index.js";
+import type { PlatformAdapter } from "../index";
 
 export interface RipplingColumns {
   employeeId: string;

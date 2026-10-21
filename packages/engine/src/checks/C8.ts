@@ -3,7 +3,7 @@
  * profile's list of registered states, and (when the platform reports tax
  * setup) has tax setup complete on the platform.
  */
-import type { Check, Exception } from "../types.js";
+import type { Check, Exception } from "../types";
 
 export const C8: Check = {
   code: "C8",

@@ -1,7 +1,7 @@
 import type { ChangeRequest, DraftRun, Exception, PayrollProfile, RunReport } from "@payroll-qa/engine";
 import type { PlatformAdapter } from "@payroll-qa/adapters";
-import type { ClientCtx, Deps, Notification, RunCtx } from "../src/deps.js";
-import { base } from "../../../packages/engine/test/fixtures.js";
+import type { ClientCtx, Deps, Notification, RunCtx } from "../src/deps";
+import { base } from "../../../packages/engine/test/fixtures";
 
 export interface Fake extends Deps {
   notifications: Notification[];

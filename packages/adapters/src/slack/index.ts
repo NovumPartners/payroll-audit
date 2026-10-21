@@ -4,7 +4,7 @@
  * as text to forward, never to the client. Every message is also recorded by the
  * jobs layer so the dashboard shows it whether or not Slack delivery is on.
  */
-import type { Notifier } from "../index.js";
+import type { Notifier } from "../index";
 
 export type DraftSink = (channelOrUser: string, text: string) => Promise<void>;
 

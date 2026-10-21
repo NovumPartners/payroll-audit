@@ -4,8 +4,8 @@
  * no election, or an election with no line, is a block. Tax treatment the
  * platform does not report is stated as unverified once per run.
  */
-import type { Check, Exception } from "../types.js";
-import { dollars } from "../context.js";
+import type { Check, Exception } from "../types";
+import { dollars } from "../context";
 
 export const C5: Check = {
   code: "C5",

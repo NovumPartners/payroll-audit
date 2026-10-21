@@ -4,7 +4,7 @@
  * no refresh token is issued, so it is re-requested with a 5-minute margin.
  * Read scopes plus upload to the client folders; never delete.
  */
-import type { DocumentStore } from "../index.js";
+import type { DocumentStore } from "../index";
 
 export interface BoxCcgConfig {
   clientId: string;

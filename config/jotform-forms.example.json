@@ -1,0 +1,80 @@
+[
+  {
+    "formId": "240000000001",
+    "type": "rate_change",
+    "clientKey": "q2_client",
+    "employeeKey": "q3_employee",
+    "effectiveDateKey": "q5_effectiveDate",
+    "submittedByKey": "q1_email",
+    "fields": { "newRate": "q4_newAnnualSalary" }
+  },
+  {
+    "formId": "240000000002",
+    "type": "new_hire",
+    "clientKey": "q2_client",
+    "effectiveDateKey": "q7_startDate",
+    "submittedByKey": "q1_email",
+    "fields": { "payType": "q4_payType", "rate": "q5_rate", "hireDate": "q7_startDate", "name": "q3_name", "workState": "q6_workState" }
+  },
+  {
+    "formId": "240000000003",
+    "type": "termination",
+    "clientKey": "q2_client",
+    "employeeKey": "q3_employee",
+    "effectiveDateKey": "q4_lastDay",
+    "submittedByKey": "q1_email",
+    "fields": { "terminationDate": "q4_lastDay", "payoutAccruedTimeOff": "q5_payoutPto" }
+  },
+  {
+    "formId": "240000000004",
+    "type": "one_time_pay",
+    "clientKey": "q2_client",
+    "employeeKey": "q3_employee",
+    "effectiveDateKey": "q6_payPeriodDate",
+    "submittedByKey": "q1_email",
+    "fields": { "earningType": "q4_type", "amount": "q5_amount", "description": "q7_notes" }
+  },
+  {
+    "formId": "240000000005",
+    "type": "housing_change",
+    "clientKey": "q2_client",
+    "employeeKey": "q3_employee",
+    "effectiveDateKey": "q7_effectiveDate",
+    "submittedByKey": "q1_email",
+    "fields": { "annualAmount": "q4_annual", "perPeriodAmount": "q5_perPeriod", "resolutionDate": "q6_resolutionDate" }
+  },
+  {
+    "formId": "240000000006",
+    "type": "benefit_change",
+    "clientKey": "q2_client",
+    "employeeKey": "q3_employee",
+    "effectiveDateKey": "q7_effectiveDate",
+    "submittedByKey": "q1_email",
+    "fields": { "planId": "q4_plan", "employeeDeduction": "q5_employee", "employerContribution": "q6_employer" }
+  },
+  {
+    "formId": "240000000007",
+    "type": "deduction_change",
+    "clientKey": "q2_client",
+    "employeeKey": "q3_employee",
+    "effectiveDateKey": "q6_effectiveDate",
+    "submittedByKey": "q1_email",
+    "fields": { "deductionName": "q4_name", "amount": "q5_amount" }
+  },
+  {
+    "formId": "240000000008",
+    "type": "time_off_change",
+    "clientKey": "q2_client",
+    "effectiveDateKey": "q6_effectiveDate",
+    "submittedByKey": "q1_email",
+    "fields": { "policyName": "q3_policy", "accrualRateHours": "q4_hours", "capHours": "q5_cap" }
+  },
+  {
+    "formId": "240000000009",
+    "type": "schedule_change",
+    "clientKey": "q2_client",
+    "effectiveDateKey": "q4_effectiveDate",
+    "submittedByKey": "q1_email",
+    "fields": { "payFrequency": "q3_frequency" }
+  }
+]

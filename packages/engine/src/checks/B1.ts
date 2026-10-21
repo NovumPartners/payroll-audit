@@ -8,9 +8,9 @@
  * termination, schedule change, a rate change inside the prior period).
  * Hourly employees are compared on rate; hours are B3.
  */
-import type { Check, Exception } from "../types.js";
-import { dollars, earning, perPeriodSalary, recurringGross } from "../context.js";
-import { nameFor, profId, requestsFor, requestsInPrior } from "./_b.js";
+import type { Check, Exception } from "../types";
+import { dollars, earning, perPeriodSalary, recurringGross } from "../context";
+import { nameFor, profId, requestsFor, requestsInPrior } from "./_b";
 
 export const B1: Check = {
   code: "B1",

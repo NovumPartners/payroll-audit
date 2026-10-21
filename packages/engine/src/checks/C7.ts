@@ -3,8 +3,8 @@
  * client's pay schedule. A schedule_change request effective this period
  * moves the frequency expectation.
  */
-import type { Check, Exception, PayFrequency } from "../types.js";
-import { addDays, calendarDays, daysBetween } from "../context.js";
+import type { Check, Exception, PayFrequency } from "../types";
+import { addDays, calendarDays, daysBetween } from "../context";
 
 const PERIOD_DAYS: Record<PayFrequency, [number, number]> = { weekly: [7, 7], biweekly: [14, 14], semimonthly: [13, 16], monthly: [28, 31] };
 
