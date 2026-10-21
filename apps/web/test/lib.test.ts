@@ -91,3 +91,16 @@ describe("PDF and profile rendering", () => {
     expect(doc.getTitle()).toBe("Payroll Profile Grace Fellowship");
   });
 });
+
+describe("token encryption", () => {
+  it("round-trips and refuses tampering or a different key", async () => {
+    const { encrypt, decrypt } = await import("../lib/crypto");
+    const blob = encrypt("refresh-token-value", SECRET);
+    expect(blob).not.toContain("refresh-token-value");
+    expect(decrypt(blob, SECRET)).toBe("refresh-token-value");
+    expect(encrypt("x", SECRET)).not.toBe(encrypt("x", SECRET)); // fresh iv each time
+    expect(() => decrypt(blob, "z".repeat(32))).toThrow();
+    const [iv, ct, tag] = blob.split(".");
+    expect(() => decrypt(`${iv}.${ct}.${tag!.slice(0, -2)}AA`, SECRET)).toThrow();
+  });
+});

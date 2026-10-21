@@ -265,6 +265,21 @@ export const profileDocumentFacts = pgTable("profile_document_facts", {
   modelId: text("model_id"),
 }, (t) => [uniqueIndex("profile_document_facts_file").on(t.clientId, t.boxFileId, t.boxFileSha1)]);
 
+/** One row per platform the firm has authorized. Tokens are stored encrypted by the application; the refresh token rotates on every use. */
+export const platformConnections = pgTable("platform_connections", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  platform: platformEnum("platform").notNull().unique(),
+  accessTokenEnc: text("access_token_enc").notNull(),
+  refreshTokenEnc: text("refresh_token_enc").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  scope: text("scope"),
+  connectedBy: uuid("connected_by").references(() => users.id),
+  connectedAt: timestamp("connected_at", { withTimezone: true }).notNull().defaultNow(),
+  lastRefreshedAt: timestamp("last_refreshed_at", { withTimezone: true }),
+  lastError: text("last_error"),
+  ...audit,
+});
+
 export const auditLog = pgTable("audit_log", {
   id: uuid("id").primaryKey().defaultRandom(),
   at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),

@@ -23,7 +23,11 @@ export const env = {
   cronSecret: () => process.env.CRON_SECRET,
   jotformSecret: () => process.env.JOTFORM_WEBHOOK_SECRET,
   jotformForms: () => process.env.JOTFORM_FORMS,
+  /** A static token (demo companies, local development). The OAuth connection below takes precedence when present. */
   gusto: () => (process.env.GUSTO_ACCESS_TOKEN ? { accessToken: process.env.GUSTO_ACCESS_TOKEN, apiBase: process.env.GUSTO_API_BASE, apiVersion: process.env.GUSTO_API_VERSION } : undefined),
+  /** The accountant partner app; the lead authorizes it once under Admin. */
+  gustoOAuth: () => (process.env.GUSTO_CLIENT_ID && process.env.GUSTO_CLIENT_SECRET ? { clientId: process.env.GUSTO_CLIENT_ID, clientSecret: process.env.GUSTO_CLIENT_SECRET, apiBase: process.env.GUSTO_API_BASE } : undefined),
+  gustoApiVersion: () => process.env.GUSTO_API_VERSION,
   box: () =>
     process.env.BOX_CLIENT_ID && process.env.BOX_CLIENT_SECRET && process.env.BOX_SUBJECT_ID
       ? { clientId: process.env.BOX_CLIENT_ID, clientSecret: process.env.BOX_CLIENT_SECRET, subjectId: process.env.BOX_SUBJECT_ID, subjectType: (process.env.BOX_SUBJECT_TYPE as "enterprise" | "user" | undefined) ?? "enterprise" }

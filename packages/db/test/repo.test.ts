@@ -286,3 +286,18 @@ describe("access list", () => {
     expect(await admitEntraUser(db, "specialist@novumsp.com", "oid-1")).toBeNull();
   });
 });
+
+describe("platform connections", () => {
+  it("stores one connection per platform, replaces it on refresh, and keeps the connector on refresh", async () => {
+    const { getPlatformConnection, savePlatformConnection, recordPlatformConnectionError } = await import("../src/repo");
+    expect(await getPlatformConnection(db, "gusto")).toBeNull();
+    await savePlatformConnection(db, { platform: "gusto", accessTokenEnc: "A", refreshTokenEnc: "R", expiresAt: new Date("2026-11-16T02:00:00Z"), connectedBy: seeded.lead.id, at: new Date("2026-11-16T00:00:00Z") });
+    await savePlatformConnection(db, { platform: "gusto", accessTokenEnc: "A2", refreshTokenEnc: "R2", expiresAt: new Date("2026-11-16T04:00:00Z"), refreshed: true, at: new Date("2026-11-16T01:56:00Z") });
+    const c = (await getPlatformConnection(db, "gusto"))!;
+    expect(c).toMatchObject({ accessTokenEnc: "A2", refreshTokenEnc: "R2", connectedBy: seeded.lead.id, lastError: null });
+    expect(c.connectedAt).toEqual(new Date("2026-11-16T00:00:00Z"));
+    expect(c.lastRefreshedAt).toEqual(new Date("2026-11-16T01:56:00Z"));
+    await recordPlatformConnectionError(db, "gusto", "Gusto token endpoint 401");
+    expect((await getPlatformConnection(db, "gusto"))!.lastError).toBe("Gusto token endpoint 401");
+  });
+});

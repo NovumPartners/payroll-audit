@@ -3,6 +3,7 @@ import { sql } from "drizzle-orm";
 import { currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
+import { getPlatformConnection } from "@payroll-qa/db";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,7 @@ export async function GET() {
   }
   return NextResponse.json({
     database,
-    gusto: !!env.gusto(),
+    gusto: { oauthApp: !!env.gustoOAuth(), connected: !!(await getPlatformConnection(db(), "gusto")), staticToken: !!env.gusto() },
     box: !!env.box(),
     slack: !!env.slackBotToken(),
     jotform: !!env.jotformSecret() && !!env.jotformForms(),

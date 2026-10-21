@@ -19,7 +19,8 @@ import {
 } from "./map";
 
 export interface GustoAdapterOptions {
-  accessToken: string;
+  /** A static token, or a provider that returns a valid one (see gustoTokenProvider). */
+  accessToken: string | (() => Promise<string>);
   apiBase?: string; // https://api.gusto.com or https://api.gusto-demo.com
   apiVersion?: string; // X-Gusto-API-Version
   fetchImpl?: typeof fetch;
@@ -39,7 +40,7 @@ interface PayrollListItem {
 export class GustoAdapter implements PlatformAdapter {
   platform = "gusto" as const;
   private base: string;
-  private token: string;
+  private token: () => Promise<string>;
   private version: string;
   private fetchImpl: typeof fetch;
   private now: () => Date;
@@ -48,7 +49,7 @@ export class GustoAdapter implements PlatformAdapter {
 
   constructor(opts: GustoAdapterOptions) {
     this.base = (opts.apiBase ?? "https://api.gusto.com").replace(/\/$/, "");
-    this.token = opts.accessToken;
+    this.token = typeof opts.accessToken === "string" ? async () => opts.accessToken as string : opts.accessToken;
     this.version = opts.apiVersion ?? "2024-04-01";
     this.fetchImpl = opts.fetchImpl ?? fetch;
     this.now = opts.now ?? (() => new Date());
@@ -58,7 +59,7 @@ export class GustoAdapter implements PlatformAdapter {
   private async get<T>(path: string, attempt = 0): Promise<T> {
     const res = await this.fetchImpl(`${this.base}${path}`, {
       method: "GET",
-      headers: { Authorization: `Bearer ${this.token}`, "X-Gusto-API-Version": this.version, Accept: "application/json" },
+      headers: { Authorization: `Bearer ${await this.token()}`, "X-Gusto-API-Version": this.version, Accept: "application/json" },
     });
     if (res.status === 429 && attempt < 4) {
       const retryAfter = Number(res.headers.get("retry-after") ?? 0);

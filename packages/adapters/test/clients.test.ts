@@ -140,3 +140,53 @@ describe("RipplingCsvAdapter", () => {
     expect(await a.pullDraft("unknown")).toBeNull();
   });
 });
+
+describe("Gusto OAuth", () => {
+  it("builds the authorize url and exchanges a code", async () => {
+    const { gustoAuthorizeUrl, gustoExchangeCode } = await import("../src/gusto/oauth");
+    const cfg = { clientId: "cid", clientSecret: "sec", apiBase: "https://api.gusto-demo.com" };
+    expect(gustoAuthorizeUrl(cfg, "https://qa/auth/gusto/callback", "st")).toBe("https://api.gusto-demo.com/oauth/authorize?client_id=cid&redirect_uri=https%3A%2F%2Fqa%2Fauth%2Fgusto%2Fcallback&response_type=code&state=st");
+    const bodies: unknown[] = [];
+    const fetchImpl = (async (_u: string | URL | Request, init?: RequestInit) => {
+      bodies.push(JSON.parse(String(init?.body)));
+      return new Response(JSON.stringify({ access_token: "a1", refresh_token: "r1", expires_in: 7200 }), { headers: { "content-type": "application/json" } });
+    }) as typeof fetch;
+    const t = await gustoExchangeCode({ ...cfg, fetchImpl }, "code1", "https://qa/cb", new Date("2026-11-16T00:00:00Z"));
+    expect(t).toEqual({ accessToken: "a1", refreshToken: "r1", expiresAt: new Date("2026-11-16T02:00:00Z"), scope: undefined });
+    expect(bodies[0]).toMatchObject({ grant_type: "authorization_code", code: "code1", client_id: "cid", client_secret: "sec", redirect_uri: "https://qa/cb" });
+  });
+
+  it("the provider refreshes five minutes before expiry, persists the rotated pair before returning, and shares one refresh", async () => {
+    const { gustoTokenProvider } = await import("../src/gusto/oauth");
+    let t = new Date("2026-11-16T00:00:00Z");
+    let stored = { accessToken: "a1", refreshToken: "r1", expiresAt: new Date("2026-11-16T02:00:00Z") };
+    const saves: string[] = [];
+    let refreshes = 0;
+    const fetchImpl = (async (_u: string | URL | Request, init?: RequestInit) => {
+      refreshes++;
+      const body = JSON.parse(String(init?.body)) as { refresh_token: string };
+      expect(body.refresh_token).toBe("r1");
+      return new Response(JSON.stringify({ access_token: "a2", refresh_token: "r2", expires_in: 7200 }), { headers: { "content-type": "application/json" } });
+    }) as typeof fetch;
+    const provider = gustoTokenProvider({ clientId: "c", clientSecret: "s", fetchImpl }, { load: async () => stored, save: async (x) => { saves.push(x.refreshToken); stored = x; } }, "https://qa/cb", () => t);
+    expect(await provider()).toBe("a1");
+    t = new Date("2026-11-16T01:54:59Z");
+    expect(await provider()).toBe("a1");
+    t = new Date("2026-11-16T01:55:00Z");
+    const [x, y] = await Promise.all([provider(), provider()]);
+    expect([x, y]).toEqual(["a2", "a2"]);
+    expect(refreshes).toBe(1);
+    expect(saves).toEqual(["r2"]);
+    expect(stored.expiresAt).toEqual(new Date("2026-11-16T03:55:00Z"));
+    const empty = gustoTokenProvider({ clientId: "c", clientSecret: "s", fetchImpl }, { load: async () => null, save: async () => {} }, "https://qa/cb");
+    await expect(empty()).rejects.toThrow(/not connected/);
+  });
+
+  it("the adapter accepts a token provider", async () => {
+    let calls = 0;
+    const g = new GustoAdapter({ accessToken: async () => `tok${++calls}`, fetchImpl: fakeFetch({ "/v1/me": () => ({ body: { roles: { payroll_admin: { companies: [] } } } }) }) });
+    await g.listCompanies();
+    await g.listCompanies();
+    expect(calls).toBe(2);
+  });
+});

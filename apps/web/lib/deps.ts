@@ -1,10 +1,11 @@
 /** Production wiring for the jobs: adapters, Box, Slack, PDF, all from the environment. */
-import { BoxStore, GustoAdapter, RipplingCsvAdapter, SlackWebApi, boxCcgTokenProvider, type DocumentStore, type PlatformAdapter } from "@payroll-qa/adapters";
+import { BoxStore, RipplingCsvAdapter, SlackWebApi, boxCcgTokenProvider, type DocumentStore, type PlatformAdapter } from "@payroll-qa/adapters";
 import { listClients } from "@payroll-qa/db";
 import { makeDbDeps, type Deps } from "@payroll-qa/jobs";
 import { db } from "./db";
 import { env } from "./env";
 import { renderPdf } from "./pdf";
+import { gustoAdapter } from "./gusto-connection";
 
 class NoDocs implements DocumentStore {
   async put(): Promise<string> {
@@ -25,8 +26,8 @@ export function docs(): DocumentStore {
 
 export async function buildDeps(): Promise<Deps> {
   const adapters: Partial<Record<"gusto" | "rippling", PlatformAdapter>> = {};
-  const g = env.gusto();
-  if (g) adapters.gusto = new GustoAdapter(g);
+  const g = await gustoAdapter();
+  if (g) adapters.gusto = g;
   const store = docs();
   if (store instanceof BoxStore) {
     const rippling = await listClients(db(), { status: "live" });

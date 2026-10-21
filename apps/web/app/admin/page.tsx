@@ -1,9 +1,11 @@
 import { notFound } from "next/navigation";
-import { listClients, listUsers } from "@payroll-qa/db";
+import { getPlatformConnection, listClients, listUsers } from "@payroll-qa/db";
 import { DEFAULT_CONFIG } from "@payroll-qa/engine";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/authz";
 import { db } from "@/lib/db";
+import { env } from "@/lib/env";
+import { when } from "@/lib/format";
 import { saveClient, saveUser } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -12,13 +14,32 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
   const user = await requireUser();
   if (!can(user, "admin")) notFound();
   const { ok, error, client: editId } = await searchParams;
-  const [users, clients] = await Promise.all([listUsers(db()), listClients(db())]);
+  const [users, clients, gusto] = await Promise.all([listUsers(db()), listClients(db()), getPlatformConnection(db(), "gusto")]);
   const editing = clients.find((c) => c.id === editId);
+  const gustoApp = !!env.gustoOAuth();
+  const connector = gusto?.connectedBy ? users.find((u) => u.id === gusto.connectedBy)?.name : undefined;
   return (
     <>
       <h1>Admin</h1>
       {ok && <div className="flash ok">{ok}</div>}
       {error && <div className="flash error">{error}</div>}
+
+      <h2>Platform connections</h2>
+      <div className="card">
+        <strong>Gusto</strong>{" "}
+        {gusto ? (
+          <span>connected {when(gusto.connectedAt)}{connector ? ` by ${connector}` : ""}; token refreshed {gusto.lastRefreshedAt ? when(gusto.lastRefreshedAt) : "never"}; expires {when(gusto.expiresAt)}.{gusto.lastError ? <span style={{ color: "var(--block)" }}> Last error: {gusto.lastError}</span> : ""}</span>
+        ) : env.gusto() ? (
+          <span>using the static GUSTO_ACCESS_TOKEN (development only).</span>
+        ) : (
+          <span className="muted">not connected.</span>
+        )}
+        {gustoApp ? (
+          <p className="small"><a className="btn" href="/auth/gusto/start">{gusto ? "Re-authorize Gusto" : "Connect Gusto"}</a> <span className="muted">Signs in as Novum&apos;s firm admin; read scopes only. Redirect URI registered on the app: {env.baseUrl}/auth/gusto/callback</span></p>
+        ) : (
+          <p className="small muted">Set GUSTO_CLIENT_ID and GUSTO_CLIENT_SECRET to enable the connection.</p>
+        )}
+      </div>
 
       <h2>Access list</h2>
       <p className="muted small">Microsoft 365 sign-in admits only these emails. Specialists see assigned clients; reviewers are read-only; leads configure.</p>

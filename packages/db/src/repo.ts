@@ -914,3 +914,30 @@ export async function saveDocumentFacts(db: AnyDb, row: { clientId: string; boxF
     .values({ clientId: row.clientId, boxFileId: row.boxFileId, boxFileName: row.boxFileName, boxFileSha1: row.boxFileSha1, kind: row.kind, facts: row.facts, modelId: row.modelId ?? null })
     .onConflictDoUpdate({ target: [s.profileDocumentFacts.clientId, s.profileDocumentFacts.boxFileId, s.profileDocumentFacts.boxFileSha1], set: { boxFileName: row.boxFileName, kind: row.kind, facts: row.facts, modelId: row.modelId ?? null, extractedAt: new Date() } });
 }
+
+// ---------- platform connections ----------
+
+export type PlatformConnectionRow = typeof s.platformConnections.$inferSelect;
+
+export async function getPlatformConnection(db: AnyDb, platform: "gusto" | "rippling"): Promise<PlatformConnectionRow | null> {
+  const [r] = await db.select().from(s.platformConnections).where(eq(s.platformConnections.platform, platform));
+  return r ?? null;
+}
+
+/** Store (or replace) the firm's connection. Called on first authorization and on every refresh, before the request that triggered it proceeds. */
+export async function savePlatformConnection(db: AnyDb, row: { platform: "gusto" | "rippling"; accessTokenEnc: string; refreshTokenEnc: string; expiresAt: Date; scope?: string; connectedBy?: string; refreshed?: boolean; at?: Date }) {
+  const at = row.at ?? new Date();
+  await db
+    .insert(s.platformConnections)
+    .values({ platform: row.platform, accessTokenEnc: row.accessTokenEnc, refreshTokenEnc: row.refreshTokenEnc, expiresAt: row.expiresAt, scope: row.scope ?? null, connectedBy: row.connectedBy ?? null, connectedAt: at, lastRefreshedAt: row.refreshed ? at : null, lastError: null })
+    .onConflictDoUpdate({
+      target: s.platformConnections.platform,
+      set: row.refreshed
+        ? { accessTokenEnc: row.accessTokenEnc, refreshTokenEnc: row.refreshTokenEnc, expiresAt: row.expiresAt, scope: row.scope ?? null, lastRefreshedAt: at, lastError: null, updatedAt: at }
+        : { accessTokenEnc: row.accessTokenEnc, refreshTokenEnc: row.refreshTokenEnc, expiresAt: row.expiresAt, scope: row.scope ?? null, connectedBy: row.connectedBy ?? null, connectedAt: at, lastRefreshedAt: null, lastError: null, updatedAt: at },
+    });
+}
+
+export async function recordPlatformConnectionError(db: AnyDb, platform: "gusto" | "rippling", error: string) {
+  await db.update(s.platformConnections).set({ lastError: error.slice(0, 500), updatedAt: new Date() }).where(eq(s.platformConnections.platform, platform));
+}

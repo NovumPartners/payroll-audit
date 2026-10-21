@@ -39,6 +39,7 @@ export interface WebhookMapper {
 }
 
 export { GustoAdapter, type GustoAdapterOptions } from "./gusto/index";
+export { gustoAuthorizeUrl, gustoExchangeCode, gustoRefresh, gustoTokenProvider, type GustoOAuthConfig, type GustoTokens, type TokenStore } from "./gusto/oauth";
 export { mapGustoPayroll, classifyEarning, annualizeRate, sumHousing, type GustoContext, type GustoPayroll } from "./gusto/map";
 export { RipplingCsvAdapter, parseRipplingRegister, parseCsv, DEFAULT_REGISTER_COLUMNS, DEFAULT_ROSTER_COLUMNS } from "./rippling/index";
 export { JotFormMapper, normalizeDate, verifySharedSecret, type JotFormFieldMap, type JotFormRawSubmission } from "./jotform/index";
