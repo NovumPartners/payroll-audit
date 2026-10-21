@@ -1,6 +1,7 @@
 /**
  * Drizzle schema for the Payroll QA system (Postgres).
  * Mirrors section 03 of the build specification. No SSN, bank, or DOB columns anywhere.
+ * Nothing is deleted; corrections are new rows (attempts, events, decisions).
  */
 import { boolean, date, index, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 
@@ -20,20 +21,25 @@ export const runStatusEnum = pgEnum("run_status", [
 ]);
 export const severityEnum = pgEnum("severity", ["block", "review", "info"]);
 export const exceptionStatusEnum = pgEnum("exception_status", ["open", "cleared", "documented"]);
+export const exceptionKindEnum = pgEnum("exception_kind", ["qa", "post_submit"]);
 export const sourceEnum = pgEnum("expected_source", ["profile", "ledger", "prior_run", "platform_rule"]);
 export const roleEnum = pgEnum("user_role", ["lead", "specialist", "reviewer"]);
+export const notificationAudienceEnum = pgEnum("notification_audience", ["specialist", "lead", "pod", "client_contact_via_specialist"]);
 
 const audit = {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 };
 
+/** The access list. Microsoft Entra signs people in; a row here is what lets them past the door. */
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   email: text("email").notNull().unique(),
   name: text("name").notNull(),
   role: roleEnum("role").notNull(),
   active: boolean("active").notNull().default(true),
+  entraOid: text("entra_oid").unique(), // recorded on first sign-in; a different oid for the same email is refused
+  slackUserId: text("slack_user_id"),
   ...audit,
 });
 
@@ -44,15 +50,24 @@ export const clients = pgTable("clients", {
   platformCompanyId: text("platform_company_id").notNull(),
   payFrequency: payFrequencyEnum("pay_frequency").notNull(),
   cutoffDaysBeforePayDate: integer("cutoff_days_before_pay_date").notNull().default(2),
+  cutoffHourUtc: integer("cutoff_hour_utc").notNull().default(22), // 5 pm Central standard time
+  expectedPayDateLagDays: integer("expected_pay_date_lag_days"),
   boxFolderId: text("box_folder_id"),
   specialistId: uuid("specialist_id").references(() => users.id),
+  contactName: text("contact_name"),
+  contactEmail: text("contact_email"),
   status: clientStatusEnum("status").notNull().default("onboarding"),
   clergyPresent: boolean("clergy_present").notNull().default(false),
   registeredStates: jsonb("registered_states").$type<string[]>().notNull().default([]),
-  thresholdOverrides: jsonb("threshold_overrides").$type<Record<string, number>>(),
+  thresholdOverrides: jsonb("threshold_overrides").$type<Record<string, number | string>>(),
+  housingEarningTypeConfirmedExcluded: boolean("housing_earning_type_confirmed_excluded").notNull().default(false),
   profileSignedBy: uuid("profile_signed_by").references(() => users.id),
   profileSignedAt: timestamp("profile_signed_at", { withTimezone: true }),
   profilePdfBoxFileId: text("profile_pdf_box_file_id"),
+  // export-mode platforms (Rippling phase 1) have no API to ask for the next period
+  nextPeriodStart: date("next_period_start"),
+  nextPeriodEnd: date("next_period_end"),
+  nextPayDate: date("next_pay_date"),
   ...audit,
 }, (t) => [uniqueIndex("clients_platform_company").on(t.platform, t.platformCompanyId)]);
 
@@ -115,14 +130,14 @@ export const timeOffPolicies = pgTable("time_off_policies", {
   id: uuid("id").primaryKey().defaultRandom(),
   clientId: uuid("client_id").notNull().references(() => clients.id),
   policyName: text("policy_name").notNull(),
-  accrualRateHours: integer("accrual_rate_hours_x100").notNull(), // hours * 100 to keep integers
+  accrualRateHoursX100: integer("accrual_rate_hours_x100").notNull(), // hours * 100 to keep integers
   accrualBasis: accrualBasisEnum("accrual_basis").notNull(),
   capHours: integer("cap_hours"),
   carryoverRule: text("carryover_rule"),
   eligibleAfterDays: integer("eligible_after_days").notNull().default(0),
   assignedEmployeeIds: jsonb("assigned_employee_ids").$type<string[]>().notNull().default([]),
   ...audit,
-});
+}, (t) => [uniqueIndex("time_off_policies_client_name").on(t.clientId, t.policyName)]);
 
 export const changeRequests = pgTable("change_requests", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -154,19 +169,21 @@ export const payrollRuns = pgTable("payroll_runs", {
   cutoffAt: timestamp("cutoff_at", { withTimezone: true }).notNull(),
   platformPayrollId: text("platform_payroll_id"),
   status: runStatusEnum("status").notNull().default("scheduled"),
-  draftSnapshot: jsonb("draft_snapshot"), // normalized DraftRun as pulled
+  draftSnapshot: jsonb("draft_snapshot"), // normalized DraftRun as pulled, whole
+  priorSnapshot: jsonb("prior_snapshot"), // the prior run as pulled for this comparison, whole
   priorRunId: uuid("prior_run_id"),
-  qaReport: jsonb("qa_report"), // RunReport
+  qaReport: jsonb("qa_report"), // RunReport of the latest attempt
+  qaAttempt: integer("qa_attempt").notNull().default(0),
   qaReportBoxFileId: text("qa_report_box_file_id"),
   qaRanAt: timestamp("qa_ran_at", { withTimezone: true }),
+  previewSentAt: timestamp("preview_sent_at", { withTimezone: true }),
   clientApprovedBy: text("client_approved_by"),
   clientApprovedAt: timestamp("client_approved_at", { withTimezone: true }),
-  previewToken: text("preview_token"),
-  previewExpiresAt: timestamp("preview_expires_at", { withTimezone: true }),
+  clientApprovalMethod: text("client_approval_method"), // "link" | "reply"
   submittedBy: uuid("submitted_by").references(() => users.id),
   submittedAt: timestamp("submitted_at", { withTimezone: true }),
   submittedSnapshot: jsonb("submitted_snapshot"),
-  escalatedAt: timestamp("escalated_at", { withTimezone: true }),
+  submittedComparedAt: timestamp("submitted_compared_at", { withTimezone: true }),
   ...audit,
 }, (t) => [
   uniqueIndex("runs_client_period").on(t.clientId, t.periodStart, t.periodEnd),
@@ -176,6 +193,8 @@ export const payrollRuns = pgTable("payroll_runs", {
 export const exceptions = pgTable("exceptions", {
   id: uuid("id").primaryKey().defaultRandom(),
   runId: uuid("run_id").notNull().references(() => payrollRuns.id),
+  attempt: integer("attempt").notNull(), // the QA attempt that produced this row
+  kind: exceptionKindEnum("kind").notNull().default("qa"),
   employeeId: uuid("employee_id").references(() => employees.id),
   checkCode: text("check_code").notNull(),
   severity: severityEnum("severity").notNull(),
@@ -183,13 +202,39 @@ export const exceptions = pgTable("exceptions", {
   actual: text("actual").notNull(),
   sourceOfExpected: sourceEnum("source_of_expected").notNull(),
   description: text("description").notNull(),
+  requestId: text("request_id"),
   status: exceptionStatusEnum("status").notNull().default("open"),
   clearedBy: uuid("cleared_by").references(() => users.id),
   clearedAt: timestamp("cleared_at", { withTimezone: true }),
   clearanceNote: text("clearance_note"),
   recurrenceOfId: uuid("recurrence_of_id"),
+  priorNote: text("prior_note"), // the clearance note from the exception this one recurs
   ...audit,
-}, (t) => [index("exceptions_run_status").on(t.runId, t.status)]);
+}, (t) => [index("exceptions_run_status").on(t.runId, t.status), index("exceptions_run_attempt").on(t.runId, t.attempt)]);
+
+/** Everything that happens to a run: stage runs, escalations, previews, approvals, submissions, comparisons. */
+export const runEvents = pgTable("run_events", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  runId: uuid("run_id").notNull().references(() => payrollRuns.id),
+  at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
+  kind: text("kind").notNull(),
+  userId: uuid("user_id").references(() => users.id),
+  detail: jsonb("detail"),
+}, (t) => [index("run_events_run").on(t.runId, t.kind)]);
+
+/** Every message the system composed, whoever it was delivered to. The dashboard inbox reads this. */
+export const notifications = pgTable("notifications", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  clientId: uuid("client_id").references(() => clients.id),
+  runId: uuid("run_id").references(() => payrollRuns.id),
+  audience: notificationAudienceEnum("audience").notNull(),
+  recipient: text("recipient").notNull(), // Slack id, handle, or user id
+  kind: text("kind").notNull(),
+  text: text("text").notNull(),
+  deliveredAt: timestamp("delivered_at", { withTimezone: true }),
+  deliveryError: text("delivery_error"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [index("notifications_client").on(t.clientId, t.createdAt)]);
 
 export const profileQuestions = pgTable("profile_questions", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -205,13 +250,26 @@ export const profileQuestions = pgTable("profile_questions", {
   resolvedBy: uuid("resolved_by").references(() => users.id),
   resolvedAt: timestamp("resolved_at", { withTimezone: true }),
   ...audit,
-});
+}, (t) => [index("profile_questions_client").on(t.clientId)]);
+
+/** Facts the profile builder extracted from Box documents, each tied to its source file. */
+export const profileDocumentFacts = pgTable("profile_document_facts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  clientId: uuid("client_id").notNull().references(() => clients.id),
+  boxFileId: text("box_file_id").notNull(),
+  boxFileName: text("box_file_name").notNull(),
+  boxFileSha1: text("box_file_sha1"),
+  kind: text("kind").notNull(), // housing_resolution | benefit_summary | offer_letter | pto_policy | other
+  facts: jsonb("facts").notNull(),
+  extractedAt: timestamp("extracted_at", { withTimezone: true }).notNull().defaultNow(),
+  modelId: text("model_id"),
+}, (t) => [uniqueIndex("profile_document_facts_file").on(t.clientId, t.boxFileId, t.boxFileSha1)]);
 
 export const auditLog = pgTable("audit_log", {
   id: uuid("id").primaryKey().defaultRandom(),
   at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
   userId: uuid("user_id").references(() => users.id),
-  action: text("action").notNull(), // "exception.cleared" | "profile.signed" | "run.viewed" | ...
+  action: text("action").notNull(), // "exception.decided" | "profile.signed" | "run.viewed" | ...
   clientId: uuid("client_id").references(() => clients.id),
   targetId: uuid("target_id"),
   detail: jsonb("detail"),

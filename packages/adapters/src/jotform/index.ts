@@ -107,7 +107,14 @@ export class JotFormMapper implements WebhookMapper {
     let payload: ChangePayload;
     switch (map.type) {
       case "new_hire":
-        payload = { kind: "new_hire", payType: (required(f("payType"), "payType").toLowerCase().startsWith("hour") ? "hourly" : "salary") as PayType, rateCents: cents(f("rate")), hireDate: normalizeDate(f("hireDate")) };
+        payload = {
+          kind: "new_hire",
+          payType: (required(f("payType"), "payType").toLowerCase().startsWith("hour") ? "hourly" : "salary") as PayType,
+          rateCents: cents(f("rate")),
+          hireDate: normalizeDate(f("hireDate")),
+          name: map.fields.name ? str(a[map.fields.name]) || undefined : undefined,
+          workState: map.fields.workState ? str(a[map.fields.workState]).toUpperCase() || undefined : undefined,
+        };
         break;
       case "termination":
         payload = { kind: "termination", terminationDate: normalizeDate(f("terminationDate")), payoutAccruedTimeOff: bool(f("payoutAccruedTimeOff")) };

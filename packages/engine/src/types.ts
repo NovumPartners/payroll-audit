@@ -129,7 +129,15 @@ export interface ChangeRequest {
 }
 
 export type ChangePayload =
-  | { kind: "new_hire"; payType: PayType; rateCents: number; hireDate: string }
+  | {
+      kind: "new_hire";
+      payType: PayType;
+      rateCents: number;
+      hireDate: string;
+      /** Carried from the form when it collects them; the profile row is created at apply time. */
+      name?: string;
+      workState?: string;
+    }
   | { kind: "termination"; terminationDate: string; payoutAccruedTimeOff: boolean }
   | {
       kind: "rate_change";
