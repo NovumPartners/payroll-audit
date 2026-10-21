@@ -1,7 +1,11 @@
 /**
  * Normalized schema. Every adapter (Gusto, Rippling, future platforms) maps
  * into these shapes. The reconciliation engine never sees platform-specific
- * payloads. Money is in cents (integer) to avoid float drift.
+ * payloads. Money is in integer cents to avoid float drift. Dates are ISO
+ * `YYYY-MM-DD` strings and compare lexicographically.
+ *
+ * The engine is a pure function of RunInput: no clock, no network, no
+ * randomness. `asOf` is always passed in.
  */
 
 export type Platform = "gusto" | "rippling";
@@ -44,7 +48,7 @@ export interface ProfileEmployee {
   payType: PayType;
   rateCents: number; // annual salary cents for salary; hourly cents for hourly
   rateEffectiveDate: string;
-  standardHours: number; // per period for hourly, used for B3
+  standardHours: number; // hours per pay period for hourly (0 for salary); used by B3 and C1
   workState: string;
   isMinister: boolean;
   ficaExempt: boolean;
@@ -94,6 +98,19 @@ export interface PayrollProfile {
   benefitElections: BenefitElection[];
   timeOffPolicies: TimeOffPolicy[];
   registeredStates: string[];
+  /**
+   * Set by the specialist at signature after confirming in the platform's
+   * settings that the housing allowance earning type is excluded from
+   * taxable wages. Used by C4 when the platform pull cannot report it.
+   */
+  housingEarningTypeConfirmedExcluded?: boolean;
+  /**
+   * Days from period end to pay date under the client's pay schedule
+   * (for example 5 for "paid the 5th and 20th for periods ending the last
+   * and 15th"). When set, C7 checks the draft pay date against it, allowing
+   * an earlier date by up to 3 days for weekend and holiday pull-forward.
+   */
+  expectedPayDateLagDays?: number;
 }
 
 // ---------- Change ledger ----------
@@ -114,7 +131,18 @@ export interface ChangeRequest {
 export type ChangePayload =
   | { kind: "new_hire"; payType: PayType; rateCents: number; hireDate: string }
   | { kind: "termination"; terminationDate: string; payoutAccruedTimeOff: boolean }
-  | { kind: "rate_change"; newRateCents: number }
+  | {
+      kind: "rate_change";
+      newRateCents: number;
+      /**
+       * The rate in force before the change, captured when the request is
+       * applied to the profile (the profile then carries the new rate, so
+       * the old one would otherwise be lost). A2 needs it to prorate a
+       * mid-period change. Absent, A2 reports the proration as not
+       * verifiable rather than guessing.
+       */
+      previousRateCents?: number;
+    }
   | { kind: "housing_change"; annualAmountCents: number; perPeriodAmountCents: number; resolutionDate: string }
   | { kind: "benefit_change"; planId: string; employeeDeductionCents: number; employerContributionCents: number }
   | { kind: "time_off_change"; policyName: string; accrualRateHours: number; capHours?: number }
@@ -125,7 +153,7 @@ export type ChangePayload =
 // ---------- Normalized platform draft ----------
 
 export interface EarningLine {
-  type: string; // "regular" | "overtime" | "bonus" | "housing_allowance" | "retro" | "commission" | custom
+  type: string; // "regular" | "overtime" | "bonus" | "housing_allowance" | "retro" | "commission" | "pto" | "pto_payout" | custom
   amountCents: number;
   hours?: number;
   excludedFromTaxableWages?: boolean;
@@ -136,7 +164,8 @@ export interface DeductionLine {
   name: string;
   employeeCents: number;
   employerCents: number;
-  preTax: boolean;
+  /** undefined when the platform pull does not report tax treatment; C5 then reports it unverified. */
+  preTax?: boolean;
 }
 
 export interface TaxLine {
@@ -160,10 +189,13 @@ export interface DraftEmployee {
   grossCents: number;
   netCents: number;
   workState: string;
+  /** Platform-configured standard hours per period, when the platform exposes it (C1). */
+  standardHours?: number;
+  /** Housing allowance paid year to date BEFORE this run. undefined when the platform does not report it. */
   ytdHousingCents?: number;
   timeOffBalanceHours?: number;
-  periodStart?: string; // for proration checks on hires/terms
-  periodEnd?: string;
+  periodStart?: string; // first paid day when the platform exposes it (hires and terminations)
+  periodEnd?: string; // last paid day when the platform exposes it
 }
 
 export interface PlatformBlocker {
@@ -180,9 +212,12 @@ export interface DraftRun {
   payFrequency: PayFrequency;
   employees: DraftEmployee[];
   blockers: PlatformBlocker[];
-  platformHousingEarningExcluded?: boolean; // C4: earning type config
-  platformAccruals?: Record<string, { rateHours: number; capHours?: number }>; // by policy name, C6
-  stateTaxSetup?: string[]; // states configured on platform, C8
+  /** C4: whether the housing earning type is configured as excluded from taxable wages. undefined when the platform cannot report it. */
+  platformHousingEarningExcluded?: boolean;
+  /** C6: accrual policies as configured on the platform, by policy name. undefined when the platform does not report them. */
+  platformAccruals?: Record<string, { rateHours: number; capHours?: number }>;
+  /** C8: states with tax setup complete on the platform. undefined when not reported; the profile's registered states are used alone. */
+  stateTaxSetup?: string[];
   pulledAt: string;
 }
 
@@ -197,15 +232,20 @@ export interface RunInput {
   config?: Partial<EngineConfig>;
 }
 
+export type ProrationMethod = "calendar_days" | "work_days";
+
 export interface EngineConfig {
-  grossMovePct: number; // B1
-  grossMoveMinCents: number; // B1
-  hoursMultiplier: number; // B3
-  hoursHardCap: number; // B3
-  netDropPct: number; // B6
+  grossMovePct: number; // B1: fraction of prior recurring gross
+  grossMoveMinCents: number; // B1: floor in cents
+  hoursMultiplier: number; // B3: multiple of standard hours
+  hoursHardCap: number; // B3: hours per BIWEEKLY period; scaled to the pay frequency
+  netDropPct: number; // B6: fraction of prior net
   clientGrossMovePct: number; // B7
-  accrualToleranceHours: number; // C6
+  accrualToleranceHours: number; // C6: fallback tolerance when a policy accrues nothing per period
   housingExpiryWarnDays: number; // D2
+  prorationMethod: ProrationMethod; // A2, A3, A4, C1: how the platform prorates a partial period
+  prorationToleranceCents: number; // A2, A3, A4, C1: rounding allowance on a computed amount
+  payDateEarlyToleranceDays: number; // C7: weekend/holiday pull-forward allowance
 }
 
 export const DEFAULT_CONFIG: EngineConfig = {
@@ -217,6 +257,9 @@ export const DEFAULT_CONFIG: EngineConfig = {
   clientGrossMovePct: 0.05,
   accrualToleranceHours: 8,
   housingExpiryWarnDays: 60,
+  prorationMethod: "calendar_days",
+  prorationToleranceCents: 100,
+  payDateEarlyToleranceDays: 3,
 };
 
 export type ExpectedSource = "profile" | "ledger" | "prior_run" | "platform_rule";
@@ -230,14 +273,20 @@ export interface Exception {
   actual: string;
   sourceOfExpected: ExpectedSource;
   description: string;
+  /** The ledger request this exception is about, when there is one. */
+  requestId?: string;
 }
 
 export interface CheckContext extends RunInput {
   config: EngineConfig;
   profileByPlatformId: Map<string, ProfileEmployee>;
+  profileById: Map<string, ProfileEmployee>;
   draftByPlatformId: Map<string, DraftEmployee>;
   priorByPlatformId: Map<string, DraftEmployee>;
-  ledgerInPeriod: ChangeRequest[]; // effective inside draft period
+  /** Non-rejected requests for this client effective inside the draft period. */
+  ledgerInPeriod: ChangeRequest[];
+  /** Non-rejected requests for this client, any effective date. */
+  ledgerActive: ChangeRequest[];
   housingByEmployee: Map<string, HousingAllowance>;
   electionsByEmployee: Map<string, BenefitElection[]>;
 }
@@ -248,6 +297,16 @@ export interface Check {
   title: string;
   severity: Severity;
   run: (ctx: CheckContext) => Exception[];
+}
+
+/** One line of the client preview: who moved, by how much, and why. */
+export interface Movement {
+  employeeId?: string;
+  employeeName: string;
+  priorGrossCents?: number;
+  grossCents?: number;
+  deltaCents: number;
+  reason: string;
 }
 
 export interface RunReport {
@@ -265,5 +324,7 @@ export interface RunReport {
     totalGrossCents: number;
     priorTotalGrossCents?: number;
     totalNetCents: number;
+    priorTotalNetCents?: number;
+    movements: Movement[];
   };
 }

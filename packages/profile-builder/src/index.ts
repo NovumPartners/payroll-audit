@@ -61,9 +61,14 @@ export function draftFromPlatform(clientId: string, clientName: string, run: Dra
     registeredStates,
     employees,
     housingAllowances: [],
-    benefitElections: run.employees.flatMap((e, i) => e.deductions.filter((d) => d.planId).map((d) => ({
-      employeeId: `emp_${i + 1}`, planId: d.planId!, planName: d.name, employeeDeductionCents: d.employeeCents, employerContributionCents: d.employerCents, preTax: d.preTax, effectiveFrom: run.period.start,
-    }))),
+    benefitElections: run.employees.flatMap((e, i) => e.deductions.filter((d) => d.planId).map((d) => {
+      if (d.preTax === undefined) {
+        questions.push({ employeeId: `emp_${i + 1}`, field: "benefit_pre_tax", platformValue: d.name, question: `${e.name}: the platform does not say whether ${d.name} is pre-tax; confirm from the plan summary.` });
+      }
+      return {
+        employeeId: `emp_${i + 1}`, planId: d.planId!, planName: d.name, employeeDeductionCents: d.employeeCents, employerContributionCents: d.employerCents, preTax: d.preTax ?? true, effectiveFrom: run.period.start,
+      };
+    })),
     timeOffPolicies: Object.entries(run.platformAccruals ?? {}).map(([name, a]) => ({ policyName: name, accrualRateHours: a.rateHours, accrualBasis: "per_period", capHours: a.capHours, assignedEmployeeIds: employees.filter((x) => run.employees.find((r) => r.platformEmployeeId === x.platformEmployeeId)?.timeOffBalanceHours !== undefined).map((x) => x.id) })),
   };
   return { profile, questions };
