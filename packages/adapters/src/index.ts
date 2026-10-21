@@ -8,6 +8,8 @@ export interface PlatformAdapter {
   platform: "gusto" | "rippling";
   /** List client companies this credential administers. */
   listCompanies(): Promise<{ platformCompanyId: string; name: string }[]>;
+  /** The next unsubmitted pay period on or after `onOrAfter`, without pulling the whole draft (one list call). */
+  nextPeriod(platformCompanyId: string, onOrAfter: string): Promise<{ period: DraftRun["period"]; platformPayrollId: string } | null>;
   /** Pull the unsubmitted draft for the period that contains `onOrAfter`, normalized. */
   pullDraft(platformCompanyId: string, onOrAfter: string): Promise<DraftRun | null>;
   /** Pull the most recent submitted (processed) run before `before`, normalized. */

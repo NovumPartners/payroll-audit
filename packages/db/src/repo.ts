@@ -876,3 +876,28 @@ export async function listAudit(db: AnyDb, args: { clientId?: string; limit?: nu
 }
 
 export { dateOnly };
+
+/** Submitted runs not yet compared to their processed register, submitted before `before`. */
+export async function runsAwaitingComparison(db: AnyDb, before: Date): Promise<RunRow[]> {
+  return db
+    .select()
+    .from(s.payrollRuns)
+    .where(and(eq(s.payrollRuns.status, "submitted"), isNull(s.payrollRuns.submittedComparedAt), lt(s.payrollRuns.submittedAt, before)))
+    .orderBy(asc(s.payrollRuns.submittedAt), asc(s.payrollRuns.id));
+}
+
+/** Live clients with their specialist's Slack id, for the cycle. */
+export async function listLiveClientsWithSpecialist(db: AnyDb) {
+  return db
+    .select({ client: s.clients, specialistSlack: s.users.slackUserId })
+    .from(s.clients)
+    .leftJoin(s.users, eq(s.clients.specialistId, s.users.id))
+    .where(eq(s.clients.status, "live"))
+    .orderBy(asc(s.clients.legalName), asc(s.clients.id));
+}
+
+/** The lead's Slack id (the first active lead with one), for escalations. */
+export async function leadSlackId(db: AnyDb): Promise<string | undefined> {
+  const [u] = await db.select({ slack: s.users.slackUserId }).from(s.users).where(and(eq(s.users.role, "lead"), eq(s.users.active, true), sql`${s.users.slackUserId} is not null`)).orderBy(asc(s.users.createdAt)).limit(1);
+  return u?.slack ?? undefined;
+}

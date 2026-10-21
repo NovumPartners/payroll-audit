@@ -57,6 +57,7 @@ describe("GustoAdapter", () => {
     const { routes } = gustoRoutes(log);
     const g = new GustoAdapter({ accessToken: "t", apiBase: "https://api.gusto-demo.com", fetchImpl: fakeFetch(routes, log), now: () => new Date("2026-11-18T06:00:00Z") });
     expect(await g.listCompanies()).toEqual([{ platformCompanyId: "co", name: "Grace" }]);
+    expect(await g.nextPeriod("co", "2026-11-16")).toEqual({ period: { start: "2026-11-01", end: "2026-11-15", payDate: "2026-11-20" }, platformPayrollId: "pr_nov" });
     const d = await g.pullDraft("co", "2026-11-16");
     expect(d?.platformPayrollId).toBe("pr_nov");
     expect(d?.blockers).toEqual([{ code: "bank", message: "unverified", employeeId: undefined }]);

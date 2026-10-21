@@ -134,9 +134,20 @@ export class GustoAdapter implements PlatformAdapter {
     return this.get<GustoPayroll>(`/v1/companies/${companyId}/payrolls/${payrollId}?include=benefits&include=deductions&include=taxes`);
   }
 
-  async pullDraft(companyId: string, onOrAfter: string): Promise<DraftRun | null> {
+  private async nextUnprocessed(companyId: string, onOrAfter: string): Promise<PayrollListItem | undefined> {
     const list = await this.get<PayrollListItem[]>(`/v1/companies/${companyId}/payrolls?processing_statuses=unprocessed&start_date=${onOrAfter}&per=100`);
-    const next = list.filter((p) => !p.processed).sort((a, b) => a.pay_period.end_date.localeCompare(b.pay_period.end_date) || a.payroll_uuid.localeCompare(b.payroll_uuid))[0];
+    return list.filter((p) => !p.processed).sort((a, b) => a.pay_period.end_date.localeCompare(b.pay_period.end_date) || a.payroll_uuid.localeCompare(b.payroll_uuid))[0];
+  }
+
+  async nextPeriod(companyId: string, onOrAfter: string) {
+    const next = await this.nextUnprocessed(companyId, onOrAfter);
+    if (!next) return null;
+    const checkDate = next.check_date ?? (await this.payroll(companyId, next.payroll_uuid)).check_date;
+    return { period: { start: next.pay_period.start_date, end: next.pay_period.end_date, payDate: checkDate }, platformPayrollId: next.payroll_uuid };
+  }
+
+  async pullDraft(companyId: string, onOrAfter: string): Promise<DraftRun | null> {
+    const next = await this.nextUnprocessed(companyId, onOrAfter);
     if (!next) return null;
     const payroll = await this.payroll(companyId, next.payroll_uuid);
     return mapGustoPayroll(await this.context(companyId, payroll, true));

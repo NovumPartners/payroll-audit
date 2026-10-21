@@ -193,6 +193,11 @@ export class RipplingCsvAdapter implements PlatformAdapter {
     });
   }
 
+  async nextPeriod(platformCompanyId: string) {
+    const c = this.clients.find((x) => x.platformCompanyId === platformCompanyId);
+    return c ? { period: c.nextPeriod, platformPayrollId: `rippling_${c.nextPeriod.end}` } : null;
+  }
+
   async pullDraft(platformCompanyId: string) {
     const c = this.clients.find((x) => x.platformCompanyId === platformCompanyId);
     return c ? this.load(c, c.nextPeriod) : null;
