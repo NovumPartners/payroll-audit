@@ -18,7 +18,7 @@ if (!url) {
 }
 
 const folder = fileURLToPath(new URL("../migrations", import.meta.url));
-const sql = postgres(url, { max: 1, prepare: false, connect_timeout: 20 });
+const sql = postgres(url, { max: 1, prepare: false, connect_timeout: 20, onnotice: () => {} });
 try {
   const started = Date.now();
   console.log(`[migrate] applying migrations from ${folder}`);
