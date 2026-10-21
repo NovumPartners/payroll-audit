@@ -10,11 +10,13 @@ import type { PlatformAdapter } from "../index.js";
 export interface RipplingColumns {
   employeeId: string;
   employeeName: string;
-  lineType: string; // "earning" | "deduction" | "tax"
+  lineType: string; // "earning" | "deduction" | "tax" | "net"
   lineName: string;
   amount: string;
   hours?: string;
   employerAmount?: string;
+  /** Column holding "Pre-tax" / "Post-tax" for deduction lines. Absent, tax treatment is left unknown and C5 says so. */
+  taxTreatment?: string;
 }
 
 export interface RipplingRosterColumns {
@@ -34,6 +36,7 @@ export const DEFAULT_REGISTER_COLUMNS: RipplingColumns = {
   amount: "Amount",
   hours: "Hours",
   employerAmount: "Employer Amount",
+  taxTreatment: "Tax Treatment",
 };
 
 export const DEFAULT_ROSTER_COLUMNS: RipplingRosterColumns = {
@@ -69,8 +72,15 @@ export function parseCsv(text: string): Record<string, string>[] {
   return rows.filter((r) => r.some((c) => c.trim() !== "")).map((r) => Object.fromEntries(header.map((h, i) => [h.trim(), (r[i] ?? "").trim()])));
 }
 
-const cents = (v: string | undefined): number => Math.round(Number((v ?? "0").replace(/[$,]/g, "")) * 100);
-const HOUSING = /housing|parsonage/i;
+const cents = (v: string | undefined): number => {
+  const s = (v ?? "").replace(/[$,\s]/g, "");
+  if (s === "") return 0;
+  const neg = /^\(.*\)$/.test(s);
+  const n = Number(s.replace(/[()]/g, ""));
+  if (!Number.isFinite(n)) throw new Error(`Rippling export: amount is not a number: ${v}`);
+  return Math.round(n * 100) * (neg ? -1 : 1);
+};
+const HOUSING = /housing|parsonage|clergy/i;
 
 function classify(name: string): string {
   const n = name.toLowerCase();
@@ -87,7 +97,7 @@ function classify(name: string): string {
 export function parseRipplingRegister(
   registerCsv: string,
   rosterCsv: string,
-  meta: { clientId: string; platformPayrollId: string; period: DraftRun["period"]; payFrequency: PayFrequency; registeredStates: string[]; pulledAt: string },
+  meta: { clientId: string; platformPayrollId: string; period: DraftRun["period"]; payFrequency: PayFrequency; pulledAt: string },
   cols: RipplingColumns = DEFAULT_REGISTER_COLUMNS,
   rosterCols: RipplingRosterColumns = DEFAULT_ROSTER_COLUMNS,
 ): DraftRun {
@@ -126,7 +136,9 @@ export function parseRipplingRegister(
       e.earnings.push({ type: classify(name), amountCents: amt, hours: hrs });
       e.grossCents += amt;
     } else if (kind.startsWith("ded") || kind.startsWith("benefit")) {
-      e.deductions.push({ name, planId: name, employeeCents: amt, employerCents: cents(cols.employerAmount ? r[cols.employerAmount] : "0"), preTax: !/post[- ]?tax|roth/i.test(name) });
+      const treatment = cols.taxTreatment ? (r[cols.taxTreatment] ?? "").toLowerCase() : "";
+      const preTax = treatment.startsWith("pre") ? true : treatment.startsWith("post") ? false : undefined;
+      e.deductions.push({ name, planId: name, employeeCents: amt, employerCents: cents(cols.employerAmount ? r[cols.employerAmount] : "0"), preTax });
     } else if (kind.startsWith("tax")) {
       const employer = /employer/i.test(name);
       if (/social security|oasdi/i.test(name)) employer ? (e.taxes.socialSecurityEmployerCents += amt) : (e.taxes.socialSecurityEmployeeCents += amt);
@@ -137,7 +149,7 @@ export function parseRipplingRegister(
     }
   }
   for (const e of byEmp.values()) {
-    if (e.netCents === 0) {
+    if (e.netCents === 0 && e.grossCents !== 0) {
       const empTax = e.taxes.socialSecurityEmployeeCents + e.taxes.medicareEmployeeCents + e.taxes.federalWithholdingCents;
       e.netCents = e.grossCents - empTax - e.deductions.reduce((s, d) => s + d.employeeCents, 0);
     }
@@ -148,9 +160,9 @@ export function parseRipplingRegister(
     platformPayrollId: meta.platformPayrollId,
     period: meta.period,
     payFrequency: meta.payFrequency,
-    employees: [...byEmp.values()],
+    employees: [...byEmp.values()].sort((a, b) => a.platformEmployeeId.localeCompare(b.platformEmployeeId)),
     blockers: [],
-    stateTaxSetup: meta.registeredStates,
+    // an export carries no tax-setup data; C8 falls back to the signed profile's registered states
     pulledAt: meta.pulledAt,
   };
 }
@@ -160,7 +172,8 @@ export class RipplingCsvAdapter implements PlatformAdapter {
   platform = "rippling" as const;
   constructor(
     private readFile: (clientFolderId: string, relativePath: string) => Promise<string | null>,
-    private clients: { platformCompanyId: string; name: string; boxFolderId: string; payFrequency: PayFrequency; registeredStates: string[]; nextPeriod: DraftRun["period"]; priorPeriod?: DraftRun["period"] }[],
+    private clients: { platformCompanyId: string; name: string; boxFolderId: string; payFrequency: PayFrequency; nextPeriod: DraftRun["period"]; priorPeriod?: DraftRun["period"] }[],
+    private now: () => Date = () => new Date(),
   ) {}
 
   async listCompanies() {
@@ -176,8 +189,7 @@ export class RipplingCsvAdapter implements PlatformAdapter {
       platformPayrollId: `rippling_${period.end}`,
       period,
       payFrequency: c.payFrequency,
-      registeredStates: c.registeredStates,
-      pulledAt: new Date().toISOString(),
+      pulledAt: this.now().toISOString(),
     });
   }
 

@@ -8,7 +8,7 @@
  */
 import { renderReportMarkdown, runChecks, type ChangeRequest, type DraftRun, type PayrollProfile, type RunReport } from "@payroll-qa/engine";
 import type { DocumentStore, Notifier, PlatformAdapter } from "@payroll-qa/adapters";
-import { exceptionsDigest } from "@payroll-qa/adapters/src/slack/index.js";
+import { exceptionsDigest } from "@payroll-qa/adapters";
 
 export interface ClientDue {
   id: string;

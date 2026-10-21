@@ -12,14 +12,18 @@ export interface PlatformAdapter {
   pullDraft(platformCompanyId: string, onOrAfter: string): Promise<DraftRun | null>;
   /** Pull the most recent submitted (processed) run before `before`, normalized. */
   pullPrior(platformCompanyId: string, before: string): Promise<DraftRun | null>;
+  /** Pull a specific processed run (the post-submit comparison); null until processed. Optional for export-mode platforms. */
+  pullProcessed?(platformCompanyId: string, platformPayrollId: string): Promise<DraftRun | null>;
 }
 
 export interface DocumentStore {
   /** Write a file into the client folder; returns the file id. */
   put(clientFolderId: string, name: string, bytes: Uint8Array, mime: string): Promise<string>;
   /** List and read source documents for the profile builder. */
-  list(clientFolderId: string): Promise<{ id: string; name: string; mime: string; size: number }[]>;
+  list(clientFolderId: string): Promise<{ id: string; name: string; mime: string; size: number; type?: "file" | "folder" }[]>;
   get(fileId: string): Promise<Uint8Array>;
+  /** Text of a file at a relative path under the folder, or null when absent. */
+  readTextByPath?(clientFolderId: string, relativePath: string): Promise<string | null>;
 }
 
 export interface Notifier {
@@ -32,9 +36,9 @@ export interface WebhookMapper {
   toChangeRequest(raw: unknown): ChangeRequest;
 }
 
-export { GustoAdapter } from "./gusto/index.js";
-export { mapGustoPayroll } from "./gusto/map.js";
-export { RipplingCsvAdapter, parseRipplingRegister } from "./rippling/index.js";
-export { JotFormMapper, type JotFormFieldMap } from "./jotform/index.js";
-export { BoxStore } from "./box/index.js";
-export { SlackDrafts } from "./slack/index.js";
+export { GustoAdapter, type GustoAdapterOptions } from "./gusto/index.js";
+export { mapGustoPayroll, classifyEarning, annualizeRate, sumHousing, type GustoContext, type GustoPayroll } from "./gusto/map.js";
+export { RipplingCsvAdapter, parseRipplingRegister, parseCsv, DEFAULT_REGISTER_COLUMNS, DEFAULT_ROSTER_COLUMNS } from "./rippling/index.js";
+export { JotFormMapper, normalizeDate, verifySharedSecret, type JotFormFieldMap, type JotFormRawSubmission } from "./jotform/index.js";
+export { BoxStore, boxCcgTokenProvider, type BoxCcgConfig, type TokenProvider } from "./box/index.js";
+export { SlackDrafts, SlackWebApi, exceptionsDigest, missingInputsReminder } from "./slack/index.js";
