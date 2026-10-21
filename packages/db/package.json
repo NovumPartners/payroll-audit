@@ -9,8 +9,9 @@
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit -p .",
     "generate": "drizzle-kit generate",
-    "migrate": "drizzle-kit migrate",
-    "seed:dev": "tsx scripts/seed-dev.ts"
+    "migrate": "tsx scripts/migrate.ts",
+    "seed:dev": "tsx scripts/seed-dev.ts",
+    "migrate:kit": "drizzle-kit migrate"
   },
   "dependencies": {
     "drizzle-orm": "^0.36.4",
