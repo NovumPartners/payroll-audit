@@ -1,0 +1,8 @@
+{
+  "name": "@payroll-qa/jobs",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": { "test": "vitest run --passWithNoTests", "typecheck": "tsc --noEmit -p ." },
+  "dependencies": { "@payroll-qa/engine": "workspace:*", "@payroll-qa/adapters": "workspace:*", "@payroll-qa/db": "workspace:*" }
+}

@@ -1,0 +1,18 @@
+{
+  "name": "@payroll-qa/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.36.4"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.28.1"
+  }
+}
